@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javafx.geometry.Pos;
+
 public class Solver {
 	private static int PUZZLES_PER_FILE = 10000;
-	private static int DIFFICULTY_LEVELS = 3;
+	private static int DIFFICULTY_LEVELS = 5;
 
 	public static void main(String[] args) {
 
@@ -68,10 +70,8 @@ public class Solver {
 			return true;
 		} else {
 			List<Possible> values = calculatePossibleValues();
-			Collections.sort(values);
 
-			for (int i = 0; i < values.size() - 1; i++) {
-				Possible value = values.get(i);
+			for (Possible value : values) {
 				puzzle[value.row][value.col] = (int) value.value;
 				if (!runAlgorithm()) {
 					puzzle[value.row][value.col] = 0;
@@ -79,30 +79,59 @@ public class Solver {
 					return true;
 				}
 			}
+			return false;
 		}
-		return false;
 	}
 
 	private ArrayList<Possible> calculatePossibleValues() {
-		ArrayList<Possible> guesses = new ArrayList<Possible>();
+		ArrayList<Possible> goodGuesses = new ArrayList<Possible>();
+		
+		ArrayList<ArrayList<ArrayList<Possible>>> rowList = new ArrayList<ArrayList<ArrayList<Possible>>>();
+		
+		for(int i = 0; i < 9; i++){
+			rowList.add(new ArrayList<ArrayList<Possible>>());
+		}
+		for(int i = 0; i < 9; i++){
+			for(int u = 0; u < 9; u++){
+				rowList.get(i).add(new ArrayList<Possible>());
+			}
+		}
 
 		for (int row = 0; row < 9; row++) {
 			for (int col = 0; col < 9; col++) {
 				if (puzzle[row][col] == 0) {
-					Possible current = new Possible();
-					current.row = row;
-					current.col = col;
 					for (int value = 1; value <= 9; value++) {
 						if (isValid(row, col, value)) {
-							current.value = value;
-							guesses.add(current);
+							rowList.get(row).get(col).add(new Possible(row, col, value));
 						}
 					}
 				}
 			}
 		}
+		
+		for(ArrayList<ArrayList<Possible>> colList : rowList){
+			for(ArrayList<Possible> guesses : colList){
+				if(guesses.size() == 1){
+					goodGuesses.add(guesses.get(0));
+				}
+			}
+		}
+		
+		for (int row = 0; row < 9; row++) {
+			for (int col = 0; col < 9; col++) {
+				ArrayList<Integer> fittingNumbers = new ArrayList<Integer>();
+				for(int value = 1; value <= 9; value++){
+					if(rowList.get(row).get(col).contains(new Possible(row, col, value))){
+						fittingNumbers.add(value);
+					}
+				}
+				if(fittingNumbers.size() == 1){
+					goodGuesses.add(new Possible(row, col, fittingNumbers.get(0)));
+				}
+			}
+		}
 
-		return guesses;
+		return goodGuesses;
 	}
 
 	private boolean isComplete() {
@@ -161,8 +190,10 @@ public class Solver {
 		int row;
 		int col;
 
-		public Possible() {
-
+		public Possible(int row, int col, int value) {
+			this.row = row;
+			this.col = col;
+			this.value = value;
 		}
 
 		@Override
