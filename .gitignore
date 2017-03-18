@@ -1,0 +1,8 @@
+bin/
+puzzles/
+*.class
+*.jar
+.project
+.settings/
+.classpath
+
